@@ -44,6 +44,7 @@ class VectorizedParticleSDSPipeline(torch.nn.Module):
         }
 
         # load pretrained model
+        print("load pretrained model")
         self.sd_pipeline = init_StableDiffusion_pipeline(
             model_cfg.model_id,
             custom_pipeline=StableDiffusionPipeline,
@@ -51,6 +52,7 @@ class VectorizedParticleSDSPipeline(torch.nn.Module):
             **pipe_kwargs
         )
         # disable grads
+        print("disable grads")
         self.sd_pipeline.vae.requires_grad_(False)
         self.sd_pipeline.text_encoder.requires_grad_(False)
         self.sd_pipeline.unet.requires_grad_(False)
@@ -60,7 +62,7 @@ class VectorizedParticleSDSPipeline(torch.nn.Module):
         self.scheduler = self.sd_pipeline.scheduler
         self.tokenizer = self.sd_pipeline.tokenizer
         self.text_encoder = self.sd_pipeline.text_encoder
-
+        print("above guidance")
         if guidance_cfg.phi_model == 'lora':
             if guidance_cfg.phi_single:  # default, use the single unet
                 # load LoRA model from the pretrained model

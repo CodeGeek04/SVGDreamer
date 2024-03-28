@@ -13,9 +13,9 @@ from diffusers import UNet2DConditionModel
 from diffusers.utils import is_torch_version, is_xformers_available
 
 DiffusersModels = OrderedDict({
-    "sd14": "CompVis/stable-diffusion-v1-4",  # resolution: 512
+    "sd21b": "CompVis/stable-diffusion-v1-4",  # resolution: 512
     "sd15": "runwayml/stable-diffusion-v1-5",  # resolution: 512
-    "sd21b": "stabilityai/stable-diffusion-2-1-base",  # resolution: 512
+    "sd14": "stabilityai/stable-diffusion-2-1-base",  # resolution: 512
     "sd21": "stabilityai/stable-diffusion-2-1",  # resolution: 768
     "sdxl": "stabilityai/stable-diffusion-xl-base-1.0",  # resolution: 1024
 })
@@ -38,8 +38,8 @@ def init_StableDiffusion_pipeline(model_id: AnyStr,
                                   custom_pipeline: StableDiffusionPipeline,
                                   custom_scheduler: SchedulerMixin = None,
                                   device: torch.device = "cuda",
-                                  torch_dtype: torch.dtype = torch.float32,
-                                  local_files_only: bool = True,
+                                  torch_dtype: torch.dtype = torch.float16,
+                                  local_files_only: bool = False,
                                   force_download: bool = False,
                                   resume_download: bool = False,
                                   ldm_speed_up: bool = False,
@@ -81,14 +81,14 @@ def init_StableDiffusion_pipeline(model_id: AnyStr,
         pipeline = custom_pipeline.from_pretrained(
             model_id,
             torch_dtype=torch_dtype,
-            local_files_only=local_files_only,
-            force_download=force_download,
-            resume_download=resume_download,
-            scheduler=custom_scheduler.from_pretrained(model_id,
-                                                       subfolder="scheduler",
-                                                       local_files_only=local_files_only,
-                                                       force_download=force_download,
-                                                       resume_download=resume_download)
+            local_files_only=False,
+#            force_download=force_download,
+#            resume_download=resume_download,
+#            scheduler=custom_scheduler.from_pretrained(model_id,
+#                                                       subfolder="scheduler",
+#                                                       local_files_only=local_files_only,
+#                                                       force_download=force_download,
+#                                                       resume_download=resume_download)
         ).to(device)
     else:
         pipeline = custom_pipeline.from_pretrained(
@@ -133,6 +133,7 @@ def init_StableDiffusion_pipeline(model_id: AnyStr,
                 )
             print(f"=> enable xformers")
             pipeline.unet.enable_xformers_memory_efficient_attention()
+            print("unet enable attention done")
         else:
             print(f"=> warning: xformers is not available.")
 
@@ -146,12 +147,14 @@ def init_StableDiffusion_pipeline(model_id: AnyStr,
             print("=> waring: gradient checkpointing is not activated for this model.")
 
     if cpu_offload:
-        pipeline.enable_sequential_cpu_offload()
+        print("cpu offload")
+#        pipeline.enable_sequential_cpu_offload()
 
     if vae_slicing:
+        print("vae")
         pipeline.enable_vae_slicing()
 
-    print(pipeline.scheduler)
+    print("Scheduler: ", pipeline.scheduler)
     return pipeline
 
 

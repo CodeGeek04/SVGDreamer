@@ -436,6 +436,7 @@ class SVGDreamerPipeline(ModelState):
             return
 
         # for convenience
+        print("for convenience")
         guidance_cfg = self.x_cfg.vpsd
         vpsd_model_cfg = self.x_cfg.vpsd_model_cfg
         n_particle = guidance_cfg.n_particle
@@ -443,13 +444,16 @@ class SVGDreamerPipeline(ModelState):
         path_reinit = self.x_cfg.path_reinit
 
         # init VPSD
+        print("init VPSD")
         pipeline = VectorizedParticleSDSPipeline(vpsd_model_cfg, self.args.diffuser, guidance_cfg, self.device)
         # init reward model
+        print("init reward model")
         reward_model = None
         if guidance_cfg.phi_ReFL:
             reward_model = RM.load("ImageReward-v1.0", device=self.device, download_root=self.x_cfg.reward_path)
 
         # create svg renderer
+        print("create svg renderer")
         if isinstance(init_svg_path, List):  # mode 3
             renderers = [self.load_renderer(init_path) for init_path in init_svg_path]
         elif isinstance(init_svg_path, (str, pathlib.Path, os.PathLike)):  # mode 2
@@ -466,15 +470,18 @@ class SVGDreamerPipeline(ModelState):
             init_image = [init_img] * n_particle
 
         # initialize the particles
+        print("initialize part")
         for render, gt_ in zip(renderers, init_image):
             render.component_wise_path_init(gt=gt_, pred=None, init_type=self.x_cfg.coord_init)
 
         # log init images
+        print("log init")
         for i, r in enumerate(renderers):
             init_imgs = r.init_image(num_paths=self.x_cfg.num_paths)
             plot_img(init_imgs, self.ft_init_dir, fname=f"init_img_stage_two_{i}")
 
         # init renderer optimizer
+        print("init renderer")
         optimizers = []
         for renderer in renderers:
             optim_ = PainterOptimizer(renderer,
@@ -486,11 +493,13 @@ class SVGDreamerPipeline(ModelState):
             optimizers.append(optim_)
 
         # init phi_model optimizer
+        print("init phi model")
         phi_optimizer = get_optimizer('adamW',
                                       pipeline.phi_params,
                                       guidance_cfg.phi_lr,
                                       guidance_cfg.phi_optim)
         # init phi_model lr scheduler
+        print("init phi model lr sch")
         phi_scheduler = None
         schedule_cfg = guidance_cfg.phi_schedule
         if schedule_cfg.use:
